@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>SliceShield Command Center</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0f172a; font-family: sans-serif; }
+        .metric-card { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+        .slice-card { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; transition: all 0.3s; cursor: pointer; }
+        .slice-card.isolated { border-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+        .log-box { background-color: #020617; border: 1px solid #334155; height: 200px; overflow-y: auto; font-family: monospace; padding: 10px; }
+        .text-cyan { color: #06b6d4; }
+    </style>
+</head>
+<body class="py-4">
+<div class="container">
+    <h3 class="text-cyan fw-bold">SliceShield Command Center</h3>
+    <div class="row mb-4 g-3">
+        <div class="col-md-3"><div class="metric-card p-3 text-center"><h6>Attacks</h6><h2 id="m-attacks">0</h2></div></div>
+        <div class="col-md-3"><div class="metric-card p-3 text-center"><h6>Isolations</h6><h2 id="m-isolations">0</h2></div></div>
+        <div class="col-md-3"><div class="metric-card p-3 text-center"><h6>Avg Latency</h6><h2 id="m-latency">0 ms</h2></div></div>
+        <div class="col-md-3"><div class="metric-card p-3 text-center"><h6>Status</h6><h2 class="text-success">ACTIVE</h2></div></div>
+    </div>
+    <div class="card metric-card mb-4 p-3">
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-danger" onclick="triggerAttack(0, 'ddos')">DDoS → eMBB</button>
+            <button class="btn btn-outline-warning" onclick="triggerAttack(1, 'nosql')">NoSQL → URLLC</button>
+            <button class="btn btn-outline-info" onclick="triggerAttack(2, 'lateral')">Lateral → mMTC</button>
+        </div>
+    </div>
+    <div class="row mb-4 g-3" id="slices-grid"></div>
+    <h6>Live Audit Log</h6>
+    <div class="log-box" id="audit-log"></div>
+</div>
+<script>
+let processedLogs = 0, totalAttacks = 0, totalLatency = 0;
+const API_BASE = 'http://127.0.0.1:5002';
+
+function triggerAttack(sId, type) {
+    fetch(`${API_BASE}/api/attack`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({slice: sId, attack: type})
+    });
+}
+
+function showRCA(sId) {
+    fetch(`${API_BASE}/api/rca/${sId}`)
+        .then(res => res.json())
+        .then(data => alert(data.report));
+}
+
+function updateUI() {
+    fetch(`${API_BASE}/api/logs`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.length > processedLogs) {
+                for (let i = processedLogs; i < data.length; i++) {
+                    const e = data[i];
+                    totalAttacks++;
+                    document.getElementById('m-attacks').innerText = totalAttacks;
+                    document.getElementById('m-isolations').innerText = totalAttacks;
+                    
+                    const card = document.getElementById(`card-${e.slice_id}`);
+                    if (card) {
+                        card.classList.add('isolated');
+                        card.querySelector('span').className = 'badge bg-danger';
+                        card.querySelector('span').innerText = 'ISOLATED (Click for RCA)';
+                    }
+                    document.getElementById('audit-log').innerHTML += `<div class="text-danger">[${new Date().toLocaleTimeString()}] Slice ${e.slice_id} Isolated.</div>`;
+                }
+                processedLogs = data.length;
+            }
+        });
+}
+[0,1,2].forEach(i => {
+    document.getElementById('slices-grid').innerHTML += `<div class="col-md-4"><div class="slice-card p-3" id="card-${i}" onclick="showRCA(${i})"><h5>Slice ${i}</h5><span class="badge bg-success">NORMAL</span></div></div>`;
+});
+setInterval(updateUI, 1000);
+</script>
+</body>
+</html>
