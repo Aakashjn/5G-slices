@@ -1,83 +1,481 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>SliceShield Command Center</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #0f172a; font-family: sans-serif; }
-        .metric-card { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; }
-        .slice-card { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; transition: all 0.3s; cursor: pointer; }
-        .slice-card.isolated { border-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
-        .log-box { background-color: #020617; border: 1px solid #334155; height: 200px; overflow-y: auto; font-family: monospace; padding: 10px; }
-        .text-cyan { color: #06b6d4; }
-    </style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SliceShield Command Center - 5G Network Security</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .glass-surface {
+        background: rgba(28, 31, 42, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(132, 148, 149, 0.2);
+    }
+    .glow-cyan { box-shadow: 0 0 15px rgba(0, 240, 255, 0.1); }
+    .glow-red  { box-shadow: 0 0 15px rgba(255, 82, 92, 0.15); }
+    .pulse-active { animation: pulse-ring 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+    @keyframes pulse-ring { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    body {
+        background-color: #0f131d;
+        scrollbar-width: thin;
+        scrollbar-color: #3b494b #0f131d;
+    }
+    .terminal-scroll::-webkit-scrollbar { width: 4px; }
+    .terminal-scroll::-webkit-scrollbar-track { background: #0a0e18; }
+    .terminal-scroll::-webkit-scrollbar-thumb { background: #3b494b; }
+    .slice-isolated {
+        border-color: rgba(255, 82, 92, 0.6) !important;
+        box-shadow: 0 0 20px rgba(255, 82, 92, 0.3);
+    }
+    .slice-isolated .slice-badge {
+        background: rgba(255, 82, 92, 0.15) !important;
+        color: #ff525c !important;
+        border-color: rgba(255, 82, 92, 0.4) !important;
+    }
+</style>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "background":                "#0f131d",
+                    "surface":                   "#0f131d",
+                    "surface-dim":               "#0f131d",
+                    "surface-tint":              "#00dbe9",
+                    "surface-container-lowest":  "#0a0e18",
+                    "surface-container-low":     "#171b26",
+                    "surface-container":         "#1c1f2a",
+                    "surface-container-high":    "#262a35",
+                    "surface-container-highest": "#313540",
+                    "surface-bright":            "#353944",
+                    "surface-variant":           "#313540",
+                    "on-surface":                "#dfe2f1",
+                    "on-surface-variant":        "#b9cacb",
+                    "on-background":             "#dfe2f1",
+                    "primary":                   "#dbfcff",
+                    "primary-fixed":             "#7df4ff",
+                    "primary-fixed-dim":         "#00dbe9",
+                    "primary-container":         "#00f0ff",
+                    "on-primary":                "#00363a",
+                    "on-primary-fixed":          "#002022",
+                    "on-primary-container":      "#006970",
+                    "on-primary-fixed-variant":  "#004f54",
+                    "inverse-primary":           "#006970",
+                    "secondary":                 "#ffb3b2",
+                    "secondary-fixed":           "#ffdad8",
+                    "secondary-fixed-dim":       "#ffb3b2",
+                    "secondary-container":       "#ff525c",
+                    "on-secondary":              "#680012",
+                    "on-secondary-fixed":        "#410008",
+                    "on-secondary-container":    "#5b000f",
+                    "on-secondary-fixed-variant":"#92001e",
+                    "tertiary":                  "#fff4e8",
+                    "tertiary-fixed":            "#ffdea8",
+                    "tertiary-fixed-dim":        "#ffba20",
+                    "tertiary-container":        "#ffd386",
+                    "on-tertiary":               "#412d00",
+                    "on-tertiary-fixed":         "#271900",
+                    "on-tertiary-fixed-variant": "#5e4200",
+                    "on-tertiary-container":     "#7d5800",
+                    "error":                     "#ffb4ab",
+                    "error-container":           "#93000a",
+                    "on-error":                  "#690005",
+                    "on-error-container":        "#ffdad6",
+                    "outline":                   "#849495",
+                    "outline-variant":           "#3b494b",
+                    "inverse-surface":           "#dfe2f1",
+                    "inverse-on-surface":        "#2c303b"
+                },
+                borderRadius: {
+                    DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"
+                },
+                spacing: {
+                    "margin-desktop": "32px",
+                    unit: "4px", "margin-mobile": "16px", gutter: "16px"
+                },
+                fontFamily: {
+                    "display-lg":  ["JetBrains Mono"],
+                    "headline-md": ["JetBrains Mono"],
+                    "headline-sm": ["JetBrains Mono"],
+                    "data-value":  ["JetBrains Mono"],
+                    "mono-label":  ["JetBrains Mono"],
+                    "body-lg":     ["Inter"],
+                    "body-sm":     ["Inter"]
+                },
+                fontSize: {
+                    "display-lg":  ["48px",{lineHeight:"1.1",letterSpacing:"-0.02em",fontWeight:"700"}],
+                    "headline-md": ["24px",{lineHeight:"32px",fontWeight:"600"}],
+                    "headline-sm": ["18px",{lineHeight:"24px",fontWeight:"600"}],
+                    "data-value":  ["32px",{lineHeight:"40px",fontWeight:"700"}],
+                    "mono-label":  ["12px",{lineHeight:"16px",letterSpacing:"0.05em",fontWeight:"500"}],
+                    "body-lg":     ["16px",{lineHeight:"24px",fontWeight:"400"}],
+                    "body-sm":     ["14px",{lineHeight:"20px",fontWeight:"400"}]
+                }
+            }
+        }
+    }
+</script>
 </head>
-<body class="py-4">
-<div class="container">
-    <h3 class="text-cyan fw-bold">SliceShield Command Center</h3>
-    <div class="row mb-4 g-3">
-        <div class="col-md-3"><div class="metric-card p-3 text-center"><h6>Attacks</h6><h2 id="m-attacks">0</h2></div></div>
-        <div class="col-md-3"><div class="metric-card p-3 text-center"><h6>Isolations</h6><h2 id="m-isolations">0</h2></div></div>
-        <div class="col-md-3"><div class="metric-card p-3 text-center"><h6>Avg Latency</h6><h2 id="m-latency">0 ms</h2></div></div>
-        <div class="col-md-3"><div class="metric-card p-3 text-center"><h6>Status</h6><h2 class="text-success">ACTIVE</h2></div></div>
+<body class="text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-desktop h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant shadow-[0_0_15px_rgba(0,240,255,0.1)]">
+    <div class="flex items-center gap-8">
+        <h1 class="font-display-lg text-[28px] text-surface-tint tracking-tighter cursor-default">SliceShield Command Center</h1>
+        <nav class="hidden md:flex items-center gap-6">
+            <a class="font-headline-sm text-headline-sm text-primary border-b-2 border-primary pb-1 transition-colors" href="#">Operations</a>
+            <a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-primary-fixed-dim transition-colors" href="#">Threat Intelligence</a>
+            <a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-primary-fixed-dim transition-colors" href="#">Network Slices</a>
+            <a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-primary-fixed-dim transition-colors" href="#">Security Policy</a>
+        </nav>
     </div>
-    <div class="card metric-card mb-4 p-3">
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-danger" onclick="triggerAttack(0, 'ddos')">DDoS → eMBB</button>
-            <button class="btn btn-outline-warning" onclick="triggerAttack(1, 'nosql')">NoSQL → URLLC</button>
-            <button class="btn btn-outline-info" onclick="triggerAttack(2, 'lateral')">Lateral → mMTC</button>
+    <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-colors">notifications_active</span>
+            <span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-colors">settings</span>
+        </div>
+        <div class="h-8 w-[1px] bg-outline-variant mx-2"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+            <div class="text-right">
+                <p class="font-mono-label text-mono-label text-on-surface">Security Specialist</p>
+                <p class="font-mono-label text-[10px] text-primary-fixed-dim opacity-70">ADMIN_LVL_01</p>
+            </div>
+            <div class="w-10 h-10 rounded-full border border-primary-fixed-dim/30 group-hover:border-primary transition-all flex items-center justify-center bg-surface-container-high text-primary font-bold text-sm select-none">
+                SS
+            </div>
         </div>
     </div>
-    <div class="row mb-4 g-3" id="slices-grid"></div>
-    <h6>Live Audit Log</h6>
-    <div class="log-box" id="audit-log"></div>
+</header>
+
+<aside class="fixed left-0 top-16 bottom-0 w-64 bg-surface-container-lowest/90 backdrop-blur-md border-r border-outline-variant flex flex-col pt-4 z-40">
+    <div class="px-6 py-4 mb-4">
+        <p class="font-headline-md text-headline-md text-primary">Command Station 01</p>
+        <p class="font-mono-label text-mono-label text-on-surface-variant">Sector: 5G-SA North</p>
+    </div>
+    <nav class="flex-1 px-4 space-y-1">
+        <a class="flex items-center gap-3 px-4 py-3 text-primary-fixed-dim bg-primary-container/10 border-r-4 border-primary-fixed-dim transition-all duration-200" href="#">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="font-mono-label text-mono-label">Dashboard</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest/50 hover:text-primary transition-all duration-200 group" href="#">
+            <span class="material-symbols-outlined group-hover:text-primary">radar</span>
+            <span class="font-mono-label text-mono-label">Threat Hunt</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest/50 hover:text-primary transition-all duration-200 group" href="#">
+            <span class="material-symbols-outlined group-hover:text-primary">hub</span>
+            <span class="font-mono-label text-mono-label">Slice Topology</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest/50 hover:text-primary transition-all duration-200 group" href="#">
+            <span class="material-symbols-outlined group-hover:text-primary">query_stats</span>
+            <span class="font-mono-label text-mono-label">Protocol Analysis</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest/50 hover:text-primary transition-all duration-200 group" href="#">
+            <span class="material-symbols-outlined group-hover:text-primary">terminal</span>
+            <span class="font-mono-label text-mono-label">System Logs</span>
+        </a>
+    </nav>
+    <div class="p-6 mt-auto border-t border-outline-variant">
+        <button class="w-full py-3 bg-error-container text-error font-mono-label text-mono-label rounded border border-error/20 hover:bg-error-container/80 active:scale-95 transition-all glow-red">
+            DEPLOY MITIGATION
+        </button>
+        <div class="mt-4 space-y-2">
+            <div class="flex items-center gap-2 text-on-surface-variant hover:text-primary cursor-pointer transition-colors">
+                <span class="material-symbols-outlined text-[18px]">history</span>
+                <span class="font-mono-label text-[11px]">Alert History</span>
+            </div>
+            <div class="flex items-center gap-2 text-on-surface-variant hover:text-primary cursor-pointer transition-colors">
+                <span class="material-symbols-outlined text-[18px]">help_center</span>
+                <span class="font-mono-label text-[11px]">Support</span>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<main class="ml-64 mt-16 p-8 min-h-[calc(100vh-64px)] bg-background">
+
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="glass-surface p-6 rounded relative overflow-hidden group hover:border-error/40 transition-colors glow-red">
+            <div class="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-100 transition-opacity">
+                <span class="material-symbols-outlined text-error">warning</span>
+            </div>
+            <h3 class="font-mono-label text-mono-label uppercase text-on-surface-variant tracking-widest">Attacks</h3>
+            <p id="m-attacks" class="font-data-value text-data-value text-error mt-2">0</p>
+            <div class="mt-4 h-[2px] w-full bg-surface-container-highest overflow-hidden">
+                <div id="attacks-bar" class="h-full bg-error transition-all duration-1000" style="width:0%"></div>
+            </div>
+        </div>
+        <div class="glass-surface p-6 rounded relative group hover:border-primary/40 transition-colors">
+            <h3 class="font-mono-label text-mono-label uppercase text-on-surface-variant tracking-widest">Isolations</h3>
+            <p id="m-isolations" class="font-data-value text-data-value text-primary mt-2">0</p>
+            <div class="mt-4 h-[2px] w-full bg-surface-container-highest">
+                <div id="isolations-bar" class="h-full bg-primary transition-all duration-1000" style="width:0%"></div>
+            </div>
+        </div>
+        <div class="glass-surface p-6 rounded relative group hover:border-primary/40 transition-colors">
+            <h3 class="font-mono-label text-mono-label uppercase text-on-surface-variant tracking-widest">Avg Latency</h3>
+            <p id="m-latency" class="font-data-value text-data-value text-on-surface mt-2">0 <span class="text-sm font-normal text-on-surface-variant">ms</span></p>
+            <div class="mt-4 h-[2px] w-full bg-surface-container-highest">
+                <div id="latency-bar" class="h-full bg-surface-tint transition-all duration-1000" style="width:0%"></div>
+            </div>
+        </div>
+        <div class="glass-surface p-6 rounded relative group hover:border-primary/40 transition-colors glow-cyan">
+            <div class="flex items-center gap-2">
+                <h3 class="font-mono-label text-mono-label uppercase text-on-surface-variant tracking-widest">Status</h3>
+                <div class="w-2 h-2 rounded-full bg-[#00ff9d] pulse-active"></div>
+            </div>
+            <p class="font-data-value text-data-value text-[#00ff9d] mt-2 drop-shadow-[0_0_8px_rgba(0,255,157,0.4)]">ACTIVE</p>
+            <div class="mt-4 h-[2px] w-full bg-surface-container-highest">
+                <div class="h-full bg-[#00ff9d] w-full"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-8">
+        <div class="glass-surface p-3 rounded-lg flex flex-wrap items-center gap-4">
+            <span class="font-mono-label text-mono-label text-on-surface-variant px-4">TRIGGERS:</span>
+            <button onclick="triggerAttack(0,'ddos')"
+                class="px-6 py-2 rounded-full font-mono-label text-mono-label border border-secondary text-secondary hover:bg-secondary/10 active:scale-95 transition-all cursor-pointer">
+                DDoS → eMBB
+            </button>
+            <button onclick="triggerAttack(1,'nosql')"
+                class="px-6 py-2 rounded-full font-mono-label text-mono-label border border-tertiary-fixed-dim text-tertiary-fixed-dim hover:bg-tertiary-fixed-dim/10 active:scale-95 transition-all cursor-pointer">
+                NoSQL → URLLC
+            </button>
+            <button onclick="triggerAttack(2,'lateral')"
+                class="px-6 py-2 rounded-full font-mono-label text-mono-label border border-primary-fixed-dim text-primary-fixed-dim hover:bg-primary-fixed-dim/10 active:scale-95 transition-all cursor-pointer">
+                Lateral → mMTC
+            </button>
+            <div class="ml-auto flex items-center gap-2 pr-4">
+                <span class="font-mono-label text-mono-label text-on-surface-variant">Live Update</span>
+                <div class="w-12 h-6 bg-surface-container-highest rounded-full p-1 cursor-pointer">
+                    <div class="w-4 h-4 bg-primary rounded-full ml-auto"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-8">
+        <h2 class="font-headline-sm text-headline-sm text-on-surface mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary-fixed-dim">dns</span>
+            Network Slice Integrity
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="slices-grid">
+            </div>
+    </section>
+
+    <section class="mb-8">
+        <div class="flex justify-between items-end mb-4">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">terminal</span>
+                Live Audit Log
+            </h2>
+            <span class="font-mono-label text-[10px] text-on-surface-variant">BUFFER: 1024KB / ENCRYPTION: AES-256</span>
+        </div>
+        <div class="glass-surface rounded-lg bg-[#0a0e18] p-4 font-mono-label text-[13px] h-[300px] overflow-y-auto terminal-scroll leading-relaxed relative" id="audit-log-container">
+            <div class="absolute top-4 right-4 animate-pulse">
+                <span class="w-2 h-2 rounded-full bg-primary inline-block mr-2"></span>
+                <span class="text-primary text-[10px]">RECORDING</span>
+            </div>
+            <div class="space-y-1" id="audit-log">
+                <p class="flex gap-4 animate-pulse" id="log-cursor">
+                    <span class="w-2 h-4 bg-primary inline-block align-middle"></span>
+                </p>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<div id="rca-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="glass-surface rounded-lg p-6 max-w-lg w-full mx-4 border border-primary-fixed-dim/30 glow-cyan">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined text-error">crisis_alert</span>
+                Root Cause Analysis
+            </h3>
+            <button onclick="closeRCA()" class="text-on-surface-variant hover:text-primary transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div id="rca-content" class="font-mono-label text-[13px] leading-relaxed text-on-surface bg-surface-container-lowest rounded p-4 whitespace-pre-wrap terminal-scroll overflow-y-auto max-h-64">
+            Loading analysis...
+        </div>
+        <button onclick="closeRCA()" class="mt-4 w-full py-2 border border-primary-fixed-dim/30 text-primary-fixed-dim font-mono-label text-mono-label rounded hover:bg-primary-fixed-dim/10 transition-all">
+            DISMISS
+        </button>
+    </div>
 </div>
+
 <script>
-let processedLogs = 0, totalAttacks = 0, totalLatency = 0;
-const API_BASE = 'http://127.0.0.1:5002';
+    // ── Config ──────────────────────────────────────────────
+    const API_BASE = 'http://127.0.0.1:5002';
+    let processedLogs = 0, totalAttacks = 0, totalLatency = 0;
 
-function triggerAttack(sId, type) {
-    fetch(`${API_BASE}/api/attack`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({slice: sId, attack: type})
+    // ── Slice card definitions ───────────────────────────────
+    const SLICES = [
+        { id: 0, name: 'eMBB',  label: 'Slice 0', sliceId: 'SL-EMBB-001' },
+        { id: 1, name: 'URLLC', label: 'Slice 1', sliceId: 'SL-URLLC-002' },
+        { id: 2, name: 'mMTC',  label: 'Slice 2', sliceId: 'SL-MMTC-003' },
+    ];
+
+    // Inject slice cards
+    const grid = document.getElementById('slices-grid');
+    SLICES.forEach(s => {
+        grid.innerHTML += `
+        <div id="card-${s.id}" onclick="showRCA(${s.id})"
+             class="glass-surface p-5 rounded hover:bg-surface-container-low transition-colors group cursor-pointer">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <p class="font-headline-sm text-headline-sm text-on-surface">${s.label} — ${s.name}</p>
+                    <p class="font-mono-label text-[10px] text-on-surface-variant">ID: ${s.sliceId}</p>
+                </div>
+                <span id="badge-${s.id}"
+                      class="slice-badge px-3 py-1 bg-primary/10 text-primary border border-primary/30 rounded text-[10px] font-bold tracking-tighter">
+                    NORMAL
+                </span>
+            </div>
+            <div class="h-16 flex items-end gap-1 px-1" id="bars-${s.id}">
+                ${[55,65,45,80,60,70].map(h =>
+                    `<div class="flex-1 bg-primary/40 rounded-t-sm transition-all duration-500" style="height:${h}%"></div>`
+                ).join('')}
+            </div>
+        </div>`;
     });
-}
 
-function showRCA(sId) {
-    fetch(`${API_BASE}/api/rca/${sId}`)
-        .then(res => res.json())
-        .then(data => alert(data.report));
-}
-
-function updateUI() {
-    fetch(`${API_BASE}/api/logs`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.length > processedLogs) {
-                for (let i = processedLogs; i < data.length; i++) {
-                    const e = data[i];
-                    totalAttacks++;
-                    document.getElementById('m-attacks').innerText = totalAttacks;
-                    document.getElementById('m-isolations').innerText = totalAttacks;
-                    
-                    const card = document.getElementById(`card-${e.slice_id}`);
-                    if (card) {
-                        card.classList.add('isolated');
-                        card.querySelector('span').className = 'badge bg-danger';
-                        card.querySelector('span').innerText = 'ISOLATED (Click for RCA)';
-                    }
-                    document.getElementById('audit-log').innerHTML += `<div class="text-danger">[${new Date().toLocaleTimeString()}] Slice ${e.slice_id} Isolated.</div>`;
-                }
-                processedLogs = data.length;
-            }
+    // ── API: Trigger attack ──────────────────────────────────
+    function triggerAttack(sId, type) {
+        fetch(`${API_BASE}/api/attack`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slice: sId, attack: type })
         });
-}
-[0,1,2].forEach(i => {
-    document.getElementById('slices-grid').innerHTML += `<div class="col-md-4"><div class="slice-card p-3" id="card-${i}" onclick="showRCA(${i})"><h5>Slice ${i}</h5><span class="badge bg-success">NORMAL</span></div></div>`;
-});
-setInterval(updateUI, 1000);
+    }
+
+    // ── API: Show RCA ────────────────────────────────────────
+    function showRCA(sId) {
+        const modal   = document.getElementById('rca-modal');
+        const content = document.getElementById('rca-content');
+        modal.classList.remove('hidden');
+        content.textContent = 'Fetching root cause analysis...';
+
+        fetch(`${API_BASE}/api/rca/${sId}`)
+            .then(res => res.json())
+            .then(data => { content.textContent = data.report; });
+    }
+
+    function closeRCA() {
+        document.getElementById('rca-modal').classList.add('hidden');
+    }
+
+    // ── Helpers ──────────────────────────────────────────────
+    function setMetric(id, value) {
+        document.getElementById(id).textContent = value;
+    }
+    function setBar(id, pct) {
+        document.getElementById(id).style.width = Math.min(pct, 100) + '%';
+    }
+
+    function appendLog(level, message, type) {
+        const log    = document.getElementById('audit-log');
+        const cursor = document.getElementById('log-cursor');
+        const colors = {
+            error:    'text-error',
+            info:     'text-primary',
+            warn:     'text-tertiary-fixed-dim',
+            system:   'text-surface-tint',
+            protocol: 'text-surface-tint'
+        };
+        const now = new Date();
+        const ts  = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}.${String(now.getMilliseconds()).padStart(3,'0')}`;
+        const col    = colors[type] || 'text-on-surface';
+        const isBold = type === 'error' ? 'font-bold italic' : '';
+
+        const entry = document.createElement('p');
+        entry.className = 'flex gap-4';
+        entry.innerHTML = `
+            <span class="text-on-surface-variant opacity-50 shrink-0">[${ts}]</span>
+            <span class="${col}">${level.toUpperCase()}:</span>
+            <span class="text-on-surface ${isBold}">${message}</span>`;
+        log.insertBefore(entry, cursor);
+
+        const container = document.getElementById('audit-log-container');
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // ── Poll backend for Attack Logs ─────────────────────────
+    function updateUI() {
+        fetch(`${API_BASE}/api/logs`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.length > processedLogs) {
+                    for (let i = processedLogs; i < data.length; i++) {
+                        const e = data[i];
+                        totalAttacks++;
+                        setMetric('m-attacks',    totalAttacks);
+                        setMetric('m-isolations', totalAttacks);
+
+                        const pct = totalAttacks * 33;
+                        setBar('attacks-bar',    pct);
+                        setBar('isolations-bar', pct);
+
+                        appendLog('ALARM', `Slice ${e.slice_id} isolated.`, 'error');
+                    }
+                    processedLogs = data.length;
+                }
+            })
+            .catch(() => {});
+    }
+
+    // ── Poll backend for Real-time Slice Status ──────────────
+    function updateStatus() {
+        fetch(`${API_BASE}/api/status`)
+            .then(res => res.json())
+            .then(state => {
+                SLICES.forEach(s => {
+                    const card = document.getElementById(`card-${s.id}`);
+                    const badge = document.getElementById(`badge-${s.id}`);
+                    
+                    if (card && badge) {
+                        if (state[s.id] === "NORMAL") {
+                            card.classList.remove('slice-isolated');
+                            badge.textContent = 'NORMAL';
+                        } else if (state[s.id] === "ISOLATED") {
+                            card.classList.add('slice-isolated');
+                            badge.textContent = 'ISOLATED';
+                        }
+                    }
+                });
+            })
+            .catch(() => {});
+    }
+
+    // Run both checks every 1000ms
+    setInterval(() => {
+        updateUI();
+        updateStatus();
+    }, 1000);
+
+    // ── Startup log entries ──────────────────────────────────
+    setTimeout(() => appendLog('SYSTEM', 'Kernel integrity check complete. All nodes responsive.',         'system'),  200);
+    setTimeout(() => appendLog('INFO',   'Slice 0 (eMBB) handshake verified. Baseline latency calibrated.','info'),    700);
+    setTimeout(() => appendLog('INFO',   'Slice 1 (URLLC) handshake verified. Baseline latency calibrated.','info'),  1100);
+    setTimeout(() => appendLog('INFO',   'Slice 2 (mMTC) handshake verified. Baseline latency calibrated.', 'info'),  1500);
+    setTimeout(() => appendLog('SYSTEM', 'Entropy pool replenished. Keys rotating in T-minus 120s.',        'system'), 2000);
+    setTimeout(() => appendLog('INFO',   'Security Policy pushed to all regional controllers.',              'info'),   2500);
+    setTimeout(() => appendLog('INFO',   'Listening on Port 443 for new telemetry packets...',               'info'),   3000);
+
+    // ── Mini bar pulse animation ─────────────────────────────
+    setInterval(() => {
+        SLICES.forEach(s => {
+            const bars = document.querySelectorAll(`#bars-${s.id} div`);
+            if (!bars.length) return;
+            const bar = bars[Math.floor(Math.random() * bars.length)];
+            const heights = ['40%','55%','65%','75%','85%','100%'];
+            bar.style.height = heights[Math.floor(Math.random() * heights.length)];
+        });
+    }, 900);
 </script>
 </body>
 </html>
