@@ -257,6 +257,17 @@ curl -X POST http://127.0.0.1:5002/api/attack \
 
 ---
 
+<img width="1600" height="836" alt="WhatsApp Image 2026-05-23 at 5 50 04 AM" src="https://github.com/user-attachments/assets/ba96a5a4-d508-4472-8a18-6dfcb46b92a6" />
+
+
+
+
+
+
+
+
+
+
 ## System Response Flow
 
 Once an attack is triggered, SliceShield autonomously executes the following sequence:
